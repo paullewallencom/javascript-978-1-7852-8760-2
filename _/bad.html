@@ -1,0 +1,260 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <title>Bad : JavaScript High Performance: @02geek</title>
+    <link href='http://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="http://code.jquery.com/ui/1.11.3/jquery-ui.min.js"></script>
+    <script>
+   // var name = 'ben';
+
+    window.onload = function(){
+      console.log('JavaScript High Performance');
+
+      eval('startClocks();');
+    
+      var fun;
+      eval("fun = function(copy){console.log(copy);return 'he said:' + copy;}");
+
+      console.log(fun("I talk to you"));
+
+    }
+
+    function startClocks(){
+      var clock = new com.o2GEEK.AlarmClock('clock');
+      var clock2 = new com.o2GEEK.TextClock('clock2',-300,'ETC');
+      var clock3 = new com.o2GEEK.Clock('clock3',300,'X');
+      var clock4 = new com.o2GEEK.CreativeClock('clockbase');
+    }
+
+    function LiveDate(a,b,c){
+      console.log(this, a,b,c);
+    }
+
+   
+    
+
+
+    Date.prototype.updateSeconds = function(){
+      this.setSeconds(this.getSeconds()+1);
+    }
+
+    Date.prototype.autoClock = function(isAuto){
+
+      if(isAuto){
+        var that = this;
+        this.__interval = setInterval(function(){that.updateSeconds();},1000);
+      }
+    }
+    var com = com || {};
+      com.o2GEEK = com.o2GEEK || {};
+
+
+    com.o2GEEK.Clock = function (id,offset,label){
+        this.version = '1.00';
+
+        this.tick=function(isTick){
+          this.isTicking = isTick;
+
+        }
+
+        this.updateClock = function(){
+          console.log("what am i?",this);
+          if(this.isTicking){
+            date = this.d;
+            clock = document.getElementById(this.id);
+            clock.innerHTML = this.formatOutput(date.getHours(),date.getMinutes(),date.getSeconds(),this.label) ;
+          }
+        };
+
+        this.formatDigits= function(val){
+          if(val<10) val = "0" + val;
+
+          return val;
+        };
+
+
+        offset = offset || 0;
+        label = label || '';
+        var d = new Date();
+        var offset = (offset+ d.getTimezoneOffset())*60*1000;
+        this.d = new Date(offset+d.getTime());
+        this.d.autoClock(true);
+        this.id = id;
+        this.label= label;
+         
+
+      this.tick(true);
+      var that = this;
+
+      this.__interval = setInterval(function(){
+        that.updateClock();},1000);
+      
+    }
+
+    com.o2GEEK.Clock.prototype.formatOutput = function(h,m,s,label){
+            return this.formatDigits(h) + ":" + this.formatDigits(m) +":"+ this.formatDigits(s) +" "+ label;
+    }
+
+
+    com.o2GEEK.TextClock = function(id,offset,label){
+      com.o2GEEK.Clock.apply(this,arguments);
+      console.log(this.version);
+
+      this.formatOutput = function(h,m,s,label){
+        var output = this.formatDigits(h);
+          output+= ":";
+          output+= this.formatDigits(m);
+          output+= ":";
+          output+= this.formatDigits(s);
+          output+= " ";
+          output+= label;
+
+        var out= 'H';
+        for(var i=0; i<h;i++){
+          out+=".";
+        }
+        
+        out+='<br/>M';
+        
+        for(var i=0; i<m;i++){
+          out+=".";
+        }
+        
+        out+='<br/>S';
+        
+        for(var i=0; i<s;i++){
+          out+=".";
+        }
+        
+        out+='<br/>'+label;
+        output += out;
+        return output;
+      }
+    }
+    
+
+    com.o2GEEK.AlarmClock = function(id,offset,label){
+      com.o2GEEK.Clock.apply(this,arguments);
+
+      this.formatOutput= function(h,m,s,label){
+        var output;
+        if(h==this.almH && m==this.almM){
+          output= 'ALARM WAKE UP';
+          snd = new Audio('art/beep.mp3');
+            snd.play();
+        }else
+          output= com.o2GEEK.Clock.prototype.formatOutput.apply(this,arguments);
+
+        return output;
+      }
+      
+      console.log(this.version);
+
+      this.doUpdate = true;
+      this.dom = document.getElementById(id);
+      this.dom.contentEditable = true;
+      that = this;
+      this.dom.addEventListener('focus',function(e){
+        this.innerHTML = this.innerHTML.slice(0,this.innerHTML.lastIndexOf(':'));
+        that.tick(false);
+      });
+      this.dom.addEventListener('blur',function(e){
+        a = this.innerHTML.split(':');
+        that.almH = parseInt(a[0]);
+        that.almM = parseInt(a[1]);
+        if((that.almH>=0 && that.almH<24) &&
+          (that.almM>=0 && that.almM<60)   ){
+          event = new Event('restart_tick');
+          this.dispatchEvent(event);
+        }
+
+        console.log(that.almH,that.almM);
+        
+      });
+
+      this.dom.addEventListener('restart_tick',function(){
+        that.tick(true);
+      })
+      
+    }
+
+    
+
+    com.o2GEEK.CreativeClock = function(id,offset,label){
+      com.o2GEEK.Clock.apply(this,arguments);
+
+      this.updateClock = function(){
+        console.log("what am i?",this);
+        if(this.isTicking){
+          var date = this.d;
+          if(!this.aCircles)this.aCircles = [];
+          
+          for(var i=0; i<this.aCircles.length;i++){
+            this.aCircles[i].remove();
+          }
+          this.formatDigits('circleH',date.getHours());
+          this.formatDigits('circleM',date.getMinutes());
+          this.formatDigits('circleS',date.getSeconds());
+          
+        }
+      };
+
+      this.formatDigits=function(cls,count){
+        for(var i=0; i<count;i++){
+          
+          var div = $("<div class='"+cls+"'></div>");
+            div.css('left',$(window).width()/2);
+            div.css('top',$(window).height()/2);
+            $(div).animate({top:Math.floor(Math.random()*$(window).height()),left:Math.floor(Math.random()*$(window).width())-50},1000);  
+            
+
+          $('body').append(div);
+          this.aCircles.push(div);
+        }
+      };
+    }
+    com.o2GEEK.CreativeClock.prototype = createObject(com.o2GEEK.Clock.prototype,com.o2GEEK.CreativeClock);
+
+
+
+    function createObject(proto,cons){
+      function c(){}
+      c.prototype = proto;
+      c.prototype.constructor = cons;
+      return new c();
+    }
+
+    //follow me at https://twitter.com/02geek
+    //learn more about me at http://02geek.com
+
+    </script>
+
+  </head>
+  <body>
+    <div id='fps'>0 FPS</div>
+    <div id='emailForm'>
+      <form id="subscribe" class="validate" target="_self" name="mc-embedded-subscribe-form" method="post" action="http://02deal.us7.list-manage2.com/subscribe/post?u=eed3e3f8f73c9e15774190e18&id=7ec0b4ea13">
+        <span>Join my newsletter to hear more from me:</span>
+        <input id="mce-EMAIL" class="form-control" type="text" placeholder="email address" name="EMAIL" value="">
+        <input id="SRC" type="hidden" value="packt" name="SRC">
+        <button class="btn btn-primary" name="join" type="submit">Join</button>
+      </form>
+    </div>
+    <div id="content">
+        <div id="clock">
+          00:00
+        </div>
+        <div id="clock2">
+          00:00
+        </div>
+        <div id="clock3">
+          00:00
+        </div>
+        <div id="clockbase"></div>
+    </div>
+    <script async src="js/fps.js?v=1.001"></script>
+  </body>
+</html>
